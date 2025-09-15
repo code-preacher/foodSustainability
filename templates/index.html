@@ -1,0 +1,563 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wheat Yield Predictor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* 2 inputs per row */
+            gap: 20px; /* space between inputs */
+        }
+
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            padding: 15px;
+        }
+
+        .form-section, .results-section {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+
+        .section-title {
+            font-size: 1.4em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title::before {
+            content: '📊';
+            margin-right: 10px;
+        }
+
+        .results-section .section-title::before {
+            content: '📈';
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #34495e;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 6px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        button {
+            flex: 1;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .train-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .predict-btn {
+            background: linear-gradient(135deg, #007bff, #6f42c1);
+            color: white;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            padding: 8px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .result-card {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .result-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 10px 0;
+        }
+
+        .result-label {
+            color: #6c757d;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .prob-bars {
+            margin-top: 20px;
+        }
+
+        .prob-item {
+            margin: 5px 0;
+        }
+
+        .prob-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .prob-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .prob-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+
+        .prob-low { background: #dc3545; }
+        .prob-medium { background: #ffc107; }
+        .prob-high { background: #28a745; }
+
+        .loading {
+            text-align: center;
+            padding: 10px;
+            color: #6c757d;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌾 Wheat Yield Predictor</h1>
+            <p>Advanced Machine Learning for Agricultural Forecasting</p>
+        </div>
+
+        <div class="main-content">
+            <div class="form-section">
+                <h2 class="section-title">Input Parameters</h2>
+
+                <div class="button-group">
+                    <button class="train-btn" onclick="trainModels()" id="trainBtn">
+                        Train Models
+                    </button>
+                </div>
+
+                <div id="status"></div>
+
+                <form id="predictionForm">
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="production">Production (tonnes):</label>
+            <input type="number" id="production" name="Production" step="0.01" required>
+        </div>
+
+        <div class="form-group">
+            <label for="area">Area (hectares):</label>
+            <input type="number" id="area" name="Area" step="0.01" required>
+        </div>
+
+        <div class="form-group">
+            <label for="year">Crop Year:</label>
+            <input type="number" id="year" name="Crop_Year" min="2010" max="2030" required>
+        </div>
+
+        <div class="form-group">
+            <label for="rainfall">Annual Rainfall (mm):</label>
+            <input type="number" id="rainfall" name="Annual_Rainfall" step="0.01" required>
+        </div>
+
+        <div class="form-group">
+            <label for="fertilizer">Fertilizer (kg):</label>
+            <input type="number" id="fertilizer" name="Fertilizer" step="0.01" required>
+        </div>
+
+        <div class="form-group">
+            <label for="pesticide">Pesticide (litres):</label>
+            <input type="number" id="pesticide" name="Pesticide" step="0.01" required>
+        </div>
+
+        <div class="form-group">
+            <label for="season">Season:</label>
+            <select id="season" name="Season" required>
+                <option value="">Select Season</option>
+                <option value="Kharif">Kharif</option>
+                <option value="Rabi">Rabi</option>
+                <option value="Summer">Summer</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="state">State:</label>
+            <select id="state" name="State" required>
+                <option value="">Select State</option>
+            </select>
+        </div>
+    </div>
+
+    <button type="submit" class="predict-btn" id="predictBtn" disabled>
+        Predict Yield
+    </button>
+</form>
+
+            </div>
+
+            <div class="results-section">
+                <h2 class="section-title">Prediction Results</h2>
+
+                <div id="results">
+                    <div class="loading">
+                        <p>Train the model first to see predictions</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isModelTrained = false;
+
+        // Load dropdown options
+        fetch('/get_options')
+            .then(response => response.json())
+            .then(data => {
+                const stateSelect = document.getElementById('state');
+                data.states.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state;
+                    option.textContent = state;
+                    stateSelect.appendChild(option);
+                });
+            });
+
+        function showStatus(message, isError = false) {
+            const status = document.getElementById('status');
+            status.className = `status ${isError ? 'error' : 'success'}`;
+            status.textContent = message;
+            status.style.display = 'block';
+        }
+
+        function showLoading() {
+            document.getElementById('results').innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Processing...</p>
+                </div>
+            `;
+        }
+
+        async function trainModels() {
+            const trainBtn = document.getElementById('trainBtn');
+            trainBtn.disabled = true;
+            trainBtn.textContent = 'Training...';
+            showLoading();
+
+            try {
+                const response = await fetch('/train', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    isModelTrained = true;
+                    document.getElementById('predictBtn').disabled = false;
+                    showStatus(`Models trained successfully! Dataset: ${result.data_shape[0]} samples, Mean Yield: ${result.sample_stats.mean_yield.toFixed(2)}`);
+
+                    document.getElementById('results').innerHTML = `
+                        <div class="result-card">
+                            <div class="result-label">Dataset Ready</div>
+                            <div class="result-value">${result.data_shape[0]}</div>
+                            <p>samples prepared</p>
+                        </div>
+                    `;
+                } else {
+                    showStatus(result.error, true);
+                }
+            } catch (error) {
+                showStatus('Error training models: ' + error.message, true);
+            } finally {
+                trainBtn.disabled = false;
+                trainBtn.textContent = 'Train Models';
+            }
+        }
+
+        document.getElementById('predictionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            if (!isModelTrained) {
+                showStatus('Please train the models first!', true);
+                return;
+            }
+
+            const formData = new FormData(e.target);
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+
+            showLoading();
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayResults(result);
+                    showStatus('Prediction completed successfully!');
+                } else {
+                    showStatus(result.error, true);
+                }
+            } catch (error) {
+                showStatus('Error making prediction: ' + error.message, true);
+            }
+        });
+
+        function displayResults(result) {
+            const probabilities = result.class_probabilities;
+
+            document.getElementById('results').innerHTML = `
+                <div class="results-grid">
+                    <div class="result-card">
+                        <div class="result-label">Predicted Yield</div>
+                        <div class="result-value">${result.yield_prediction.toFixed(2)}</div>
+                        <p>tonnes/hectare</p>
+                    </div>
+
+                    <div class="result-card">
+                        <div class="result-label">Yield Category</div>
+                        <div class="result-value">${result.yield_class}</div>
+                        <p>classification</p>
+                    </div>
+                </div>
+
+                <div class="prob-bars">
+                    <h4>Classification Confidence</h4>
+                    ${Object.entries(probabilities).map(([category, prob]) => `
+                        <div class="prob-item">
+                            <div class="prob-label">
+                                <span>${category}</span>
+                                <span>${(prob * 100).toFixed(1)}%</span>
+                            </div>
+                            <div class="prob-bar">
+                                <div class="prob-fill prob-${category.toLowerCase()}"
+                                     style="width: ${prob * 100}%"></div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Set default values
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('production').value = 100000;
+            document.getElementById('area').value = 50000;
+            document.getElementById('year').value = 2023;
+            document.getElementById('rainfall').value = 900;
+            document.getElementById('fertilizer').value = 2000000;
+            document.getElementById('pesticide').value = 10000;
+            document.getElementById('season').value = 'Rabi';
+            document.getElementById('state').value = 'Punjab';
+        });
+    </script>
+
+<!-- Prediction Modal -->
+<div id="resultModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeModal()">&times;</span>
+    <h2>Prediction Results</h2>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<style>
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6);
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    background: #fff;
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: 12px;
+    width: 80%;
+    max-width: 600px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    animation: slideUp 0.3s ease;
+}
+
+.close-btn {
+    float: right;
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #333;
+    cursor: pointer;
+}
+
+.close-btn:hover {
+    color: #e74c3c;
+}
+
+@keyframes fadeIn {
+    from {opacity: 0;}
+    to {opacity: 1;}
+}
+
+@keyframes slideUp {
+    from {transform: translateY(40px); opacity: 0;}
+    to {transform: translateY(0); opacity: 1;}
+}
+</style>
+
+</body>
+</html>
