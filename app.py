@@ -133,7 +133,7 @@ class WheatYieldPredictor:
         }
 
 
-# Initialize the predictor
+# Initialize the predictor for console use
 predictor = WheatYieldPredictor()
 
 
@@ -213,14 +213,4 @@ def get_options():
 
 
 if __name__ == '__main__':
-    print("🌾 Wheat Yield Predictor Flask App")
-    print("=" * 50)
-    print("Features:")
-    print("✓ Regression model for yield prediction")
-    print("✓ Classification model for yield categories")
-    print("✓ Interactive web interface")
-    print("✓ Real-time model training")
-    print("✓ Responsive design")
-    print("=" * 50)
-    print("Starting server...")
     app.run(debug=True, host='0.0.0.0', port=5000)
